@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -25,11 +26,6 @@
         exit(EXIT_FAILURE); \
     } while(0)
 
-struct packet
-{
-    int len;
-    char buffer[1024];
-};
 
 ssize_t readn(int fd, void* buf, size_t count)
 {
@@ -119,38 +115,42 @@ ssize_t readline(int sockfd, void* buf, size_t maxline)
     return -1;
 }
 
-void do_service(int conn)
+void echo_serv(int conn)
 {
-    struct packet recvbuf;
+    char recvbuf[1024];
     while(1)
     {
         memset(&recvbuf, 0, sizeof(recvbuf));
-        int ret = readn( conn, &recvbuf.len, 4);
+        int ret = readline( conn, &recvbuf, 1024);
         if(ret == -1)
-            ERR_EXIT("read");
-        else if(ret < 4)
+            ERR_EXIT("readline");
+        if( ret == 0)
         {
             printf("client stoped now.");
             break;
         }
-        int n = ntohl(recvbuf.len);
-        ret = readn( conn, recvbuf.buffer, n);
-        if(ret == -1)
-        {
-            ERR_EXIT("read");
-        }
-        else if(ret < n)
-        {
-            printf("client stoped now.");
-            break;
-        }
-        fputs(recvbuf.buffer, stdout);
-        writen(conn, &recvbuf, 4+n);
+        fputs(recvbuf, stdout);
+        writen(conn, &recvbuf, strlen(recvbuf));
     }
 }
+#include <sys/wait.h>
+void handle_sigchld(int signal_id)
+{
+//    wait(NULL);
+    while(waitpid(-1, NULL, WNOHANG) > 0);
+    /*
+     *首先，第一次想到while循环还可以这么写。
+     *第二， 推荐使用这种方式来处理多进程处理连接推出。
+     *因为使用该种方式，此处代码收缩性更好，可以在此处处理其他更多的事情。
+     */
+//    waitpid(-1, NULL, WNOHANG);
+}
+
 
 int main(int argc, char* argv[])
 {
+    /* signal(SIGCHLD, SIG_IGN); //忽略僵尸信号进程    */
+    signal(SIGCHLD, handle_sigchld);
     int listenfd;  //创建套接字 相当于安装一个话机
     if((listenfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
         ERR_EXIT("socket");
@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
         if(pid == 0)
         {
             close(listenfd); // 子进程不需要处理监听
-            do_service(conn);
+            echo_serv(conn);
             exit(EXIT_SUCCESS);
         }
         else
