@@ -273,6 +273,9 @@ int main(int argc, char* argv[])
             {
                 conn = events[i].data.fd;
                 if(conn < 0)continue;
+
+
+                /*   封装任务放进线程池    */
                 char recvbuf[1024];
                 memset( recvbuf, 0, 1024);
                 int int_r_readlin = readline( conn, recvbuf, 1024);
