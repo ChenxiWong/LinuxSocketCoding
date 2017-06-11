@@ -1,0 +1,29 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sqlca.h>
+int main(int argc, char* argv[])
+{
+    char username[10], password[10], server[10];
+    memset(username, 0, 10);
+    memset(password, 0, 10);
+    memset(server, 0, 10);
+    char name[10], title[10];
+    memset(name, 0, 10);
+    memset(title, 0, 10);
+    float salary;
+    printf("Please input username :");
+    gets(username);
+    printf("Please input password :");
+    gets(password);
+    printf("Please input servername :");
+    gets(server);
+    EXEC SQL CONNECT :username IDENTIFIED BY :password USING :server;
+    printf("Please input emploee name :");
+    gets(name);
+    EXEC SQL SELECT sal, job INTO :salary, :title FROM emp
+        WHERE UPPER(ename)=UPPER(:name);
+    printf("title is %s, salary is %6.2f .\n", title, salary);
+    EXEC SQL COMMIT RELEASE;
+    return 0;
+}

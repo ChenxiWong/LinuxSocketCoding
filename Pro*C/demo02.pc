@@ -1,0 +1,74 @@
+/*********************************************************************
+* File Name: demo02.pc
+* Author: wangchenxi
+* mail: chinawangchenxi@gmail.com
+* Created Time: 2017年06月12日 星期一 00时24分34秒
+*********************************************************************/
+/* Last Update:2017-06-12 00:24:34 */
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sqlca.h>
+
+/* define the gloable var */
+
+char username[10], password[10], server[10];
+
+extern sqlglm(char*, int*, int*);
+
+void democonnect();
+
+void sql();
+
+void sql_error();
+
+int main(int argc, char* argv[])
+{
+    EXEC SQL WHENEVER SQLERROR DO sql_error();
+    EXEC SQL WHENEVER NOT FOUND DO sql_error();
+
+    democonnect();
+
+    sql();
+
+    EXEC SQL COMMIT RELEASE;
+}
+
+void democonnect()
+{
+    printf("Please input username :");
+    memset(username, 0, 10);
+    scanf("%s",username);
+    printf("Please input password :");
+    memset(password, 0, 10);
+    scanf("%s",password);
+    printf("Please input servername :");
+    memset(server, 0, 10);
+    scanf("%s",server);
+    EXEC SQL CONNECT :username IDENTIFIED BY :password USING :server;
+}
+
+void sql_error()
+{
+    char msg[200];
+    size_t buff_len, msg_len;
+    buff_len = sizeof(msg);
+    sqlglm(msg, &buff_len, &msg_len);
+    if( msg_len > buff_len) msg_len = buff_len;
+    printf("%.*s.\n", msg_len, msg);
+}
+
+void sql()
+{
+    int dno;
+    char dept_name[15], dept_loc[14];
+    printf(" Please input deptNo: ");
+    scanf("%d", &dno);
+    fflush(stdin);
+    EXEC SQL SELECT dname, loc INTO :dept_name, :dept_loc from dept
+        WHERE deptno=:dno;
+    if(sqlca.sqlcode == 0)
+        printf("dept name is %s , the location is %s \n", dept_name, dept_loc);
+}
+
+
