@@ -1,0 +1,31 @@
+/************************************************************************
+* File Name: demo03.pc
+* Author: wangchenxi
+* mail: chinawangchenxi@gmail.com
+* Created Time: 2017年06月13日 星期二 11时05分54秒
+* brief:
+*************************************************************************/
+/* Last Update:2017-06-13 11:05:54 */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sqlca.h>
+
+int main(int argc, char* argcv[])
+{
+    char username[10],password[10],server[10];
+    printf("Please input username:");
+    scanf("%s", username);
+    printf("Please input password:");
+    scanf("%s", password);
+    printf("Please input servername:");
+    scanf("%s", server);
+    EXEC SQL CONNECT :username IDENTIFIED BY :password USING :server;
+    if ( sqlca.sqlcode == 0)
+        printf("Connect Successfully!\n");
+    else
+        printf("%.*s\n", sqlca.sqlerrm.sqlerrml,
+                sqlca.sqlerrm.sqlerrmc);
+    EXEC SQL COMMIT RELEASE;
+}
