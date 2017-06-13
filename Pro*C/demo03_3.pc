@@ -1,0 +1,76 @@
+/************************************************************************
+* File Name: demo03_3.pc
+* Author: wangchenxi
+* mail: chinawangchenxi@gmail.com
+* Created Time: 2017年06月13日 星期二 11时56分14秒
+* brief:
+*************************************************************************/
+/* Last Update:2017-06-13 11:56:14 */
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include <sqlca.h>
+
+char conn1[10], conn2[10], username[10], password[10],server[10];
+
+void def_connect();
+
+void nodedef_connect(char*);
+
+int main(int argc, char* argv[])
+{
+    strcpy(conn1, "conn1");
+    strcpy(conn2, "conn2");
+    def_connect();
+    EXEC SQL SELECT user INTO :username FROM dual;
+    printf("defaulet user is %s .\n", username);
+    nodedef_connect(conn1);
+    EXEC SQL AT :conn1 SELECT user INTO :username FROM dual;
+    printf("conn1 user is %s .\n", username);
+    nodedef_connect(conn2);
+    EXEC SQL AT :conn2 SELECT user INTO :username FROM dual;
+    printf("conn2 user is %s .\n", username);
+    EXEC SQL COMMIT RELEASE;
+    EXEC SQL AT :conn1 COMMIT RELEASE;
+    EXEC SQL AT :conn2 COMMIT RELEASE;
+}
+
+
+void def_connect()
+{
+    printf("Please input username: ");
+    memset(username, 0, 10);
+    scanf("%s",username);
+    printf("Please input password: ");
+    memset(password, 0, 10);
+    scanf("%s",password);
+    printf("Please input servername: ");
+    memset(server, 0, 10);
+    scanf("%s",server);
+    EXEC SQL CONNECT :username IDENTIFIED BY :password USING :server;
+    if ( sqlca.sqlcode == 0)
+        printf("%s Connect Successfully!\n", username);
+    else
+        printf("%.*s\n", sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+}
+
+void nodedef_connect(char* conn)
+{
+    printf("Please input username: ");
+    memset(username, 0, 10);
+    scanf("%s",username);
+    printf("Please input password: ");
+    memset(password, 0, 10);
+    scanf("%s",password);
+    printf("Please input servername: ");
+    memset(server, 0, 10);
+    scanf("%s",server);
+    EXEC SQL CONNECT :username IDENTIFIED BY :password
+       AT :conn USING :server;
+    if ( sqlca.sqlcode == 0)
+        printf("%s Connect Successfully!\n", username);
+    else
+        printf("%.*s\n", sqlca.sqlerrm.sqlerrml, sqlca.sqlerrm.sqlerrmc);
+}
+
